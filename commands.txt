@@ -1,0 +1,53 @@
+SERVER PI:
+avconv -f video4linux2 -input_format mjpeg -r 30 -i /dev/video0 -c:v copy -f avi pipe: | nc 172.30.9.156 1500
+
+ENCODER:
+nc -l 1500 |  
+avconv -f avi -r 30 -i pipe: -c:v rawvideo -pix_fmt rgb24 -f rawvideo -r 30 pipe: | 
+./test.py | 
+avconv -f rawvideo -video_size 640x480 -pix_fmt rgb24 -r 30 -i pipe: -c:v mjpeg -qscale 2 -f avi pipe: | 
+vlc - --file-caching=100
+
+nc -l 1500 | avconv -i pipe: -f image2 out%00d.jpg
+
+
+^^^^^^^^^^^^ WORKS ^^^^^^^^^^^^
+
+#########CANON RAW ###########3
+gphoto2 --capture-movie --stdout |  
+vlc - --file-caching=100
+
+######CANON T1I OVERLAY #############33
+
+gphoto2 --capture-movie --stdout |  
+avconv -f mjpeg -r 30 -i pipe: -c:v rawvideo  -pix_fmt rgb24 -f rawvideo -video_size 928x616 pipe: | 
+./test.py | 
+avconv  -i pipe: -c:v mjpeg -f avi pipe: | 
+vlc - --file-caching=100
+
+
+############USB WEBCAM OVERLAY ##########################
+
+avconv -f video4linux2 -input_format mjpeg -r 30 -i /dev/video0 -s 928x616 -c:v rawvideo  -pix_fmt rgb24 -f rawvideo pipe: | 
+./test.py | 
+avconv  -i pipe: -c:v mjpeg -f avi pipe: | 
+vlc - --file-caching=100
+
+
+
+########## CANON OVER NETWORK OVERLAY ########3
+
+***** CAPTURE DEVICE ******
+gphoto2 --capture-movie --stdout | 
+nc 172.30.9.156 1500
+
+
+****** SERVER *******
+nc -l 1500 |
+avconv -f mjpeg -r 30 -i pipe: -c:v rawvideo  -pix_fmt rgb24 -f rawvideo -video_size 928x616 pipe: | 
+./test.py | 
+avconv  -i pipe: -c:v mjpeg -f avi pipe: | 
+vlc - --file-caching=100
+
+
+
